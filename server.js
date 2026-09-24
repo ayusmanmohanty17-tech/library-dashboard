@@ -16,16 +16,16 @@ app.use(express.json());
 // MYSQL DATABASE CONNECTION
 // ============================================
 
-// Use Railway's automatic connection string if available, otherwise fallback
-const db = mysql.createPool(process.env.MYSQL_URL || {
-host: "mysql.railway.internal",
-port: 3306,
-user: "root",
-password: "GXMzjilsDEWkVmnFXywoMUpYvGFEHTzD",
-database: "railway",
-waitForConnections: true,
-connectionLimit: 10,
-queueLimit: 0
+// Safely use Railway's individual environment variables
+const db = mysql.createPool({
+    host: process.env.MYSQLHOST || "mysql.railway.internal",
+    port: process.env.MYSQLPORT || 3306,
+    user: process.env.MYSQLUSER || "root",
+    password: process.env.MYSQLPASSWORD || "GXMzjHsDEMwKVmnFXywoMUpYvGFEHTzD",
+    database: process.env.MYSQLDATABASE || "railway",
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
 // ============================================
@@ -34,26 +34,26 @@ queueLimit: 0
 
 db.getConnection((err, connection) => {
 
-if (err) {
-    console.error("");
-    console.error("❌ MySQL connection failed:");
-    console.error(err.message);
-    console.error("");
+    if (err) {
+        console.error("");
+        console.error("❌ MySQL connection failed:");
+        console.error(err.message);
+        console.error("");
 
-    return;
-}
+        return;
+    }
 
-console.log("");
-console.log("======================================");
-console.log("✅ CONNECTED TO MYSQL");
-console.log("======================================");
-console.log("📚 Database: library");
-console.log("🖥️ Host: localhost");
-console.log("🔌 Port: 3306");
-console.log("======================================");
-console.log("");
+    console.log("");
+    console.log("======================================");
+    console.log("✅ CONNECTED TO MYSQL");
+    console.log("======================================");
+    console.log("📚 Database: library");
+    console.log("🖥️ Host: localhost");
+    console.log("🔌 Port: 3306");
+    console.log("======================================");
+    console.log("");
 
-connection.release();
+    connection.release();
 });
 
 // ============================================
@@ -62,7 +62,7 @@ connection.release();
 
 app.get("/api/dashboard", (req, res) => {
 
-const sql = `
+    const sql = `
     SELECT
         (SELECT COALESCE(SUM(quantity), 0)
          FROM books) AS totalBooks,
@@ -78,18 +78,18 @@ const sql = `
          FROM students) AS totalStudents
 `;
 
-db.query(sql, (err, results) => {
+    db.query(sql, (err, results) => {
 
-    if (err) {
-        console.error("Dashboard error:", err.message);
+        if (err) {
+            console.error("Dashboard error:", err.message);
 
-        return res.status(500).json({
-            error: "Failed to load dashboard data"
-        });
-    }
+            return res.status(500).json({
+                error: "Failed to load dashboard data"
+            });
+        }
 
-    res.json(results[0]);
-});
+        res.json(results[0]);
+    });
 });
 
 // ============================================
@@ -98,7 +98,7 @@ db.query(sql, (err, results) => {
 
 app.get("/api/books", (req, res) => {
 
-const sql = `
+    const sql = `
     SELECT
         id,
         title,
@@ -111,18 +111,18 @@ const sql = `
     ORDER BY id DESC
 `;
 
-db.query(sql, (err, results) => {
+    db.query(sql, (err, results) => {
 
-    if (err) {
-        console.error("Books error:", err.message);
+        if (err) {
+            console.error("Books error:", err.message);
 
-        return res.status(500).json({
-            error: "Failed to fetch books"
-        });
-    }
+            return res.status(500).json({
+                error: "Failed to fetch books"
+            });
+        }
 
-    res.json(results);
-});
+        res.json(results);
+    });
 });
 
 // ============================================
@@ -131,7 +131,7 @@ db.query(sql, (err, results) => {
 
 app.get("/api/students", (req, res) => {
 
-const sql = `
+    const sql = `
     SELECT
         id,
         name,
@@ -142,18 +142,18 @@ const sql = `
     ORDER BY id DESC
 `;
 
-db.query(sql, (err, results) => {
+    db.query(sql, (err, results) => {
 
-    if (err) {
-        console.error("Students error:", err.message);
+        if (err) {
+            console.error("Students error:", err.message);
 
-        return res.status(500).json({
-            error: "Failed to fetch students"
-        });
-    }
+            return res.status(500).json({
+                error: "Failed to fetch students"
+            });
+        }
 
-    res.json(results);
-});
+        res.json(results);
+    });
 });
 
 // ============================================
@@ -162,7 +162,7 @@ db.query(sql, (err, results) => {
 
 app.get("/api/issued-books", (req, res) => {
 
-const sql = `
+    const sql = `
     SELECT
         ib.id,
         b.title AS book_title,
@@ -182,18 +182,18 @@ const sql = `
     ORDER BY ib.id DESC
 `;
 
-db.query(sql, (err, results) => {
+    db.query(sql, (err, results) => {
 
-    if (err) {
-        console.error("Issued books error:", err.message);
+        if (err) {
+            console.error("Issued books error:", err.message);
 
-        return res.status(500).json({
-            error: "Failed to fetch issued books"
-        });
-    }
+            return res.status(500).json({
+                error: "Failed to fetch issued books"
+            });
+        }
 
-    res.json(results);
-});
+        res.json(results);
+    });
 });
 
 // ============================================
@@ -202,11 +202,11 @@ db.query(sql, (err, results) => {
 
 app.get("/", (req, res) => {
 
-res.json({
-    message: "Library Management System API is running",
-    database: "library",
-    status: "OK"
-});
+    res.json({
+        message: "Library Management System API is running",
+        database: "library",
+        status: "OK"
+    });
 });
 
 // ============================================
@@ -215,11 +215,11 @@ res.json({
 
 app.listen(PORT, () => {
 
-console.log("");
-console.log("======================================");
-console.log("📚 LIBRARY MANAGEMENT SYSTEM");
-console.log("======================================");
-console.log(`🚀 Server running at http://localhost:${PORT}`);
-console.log("======================================");
-console.log("");
+    console.log("");
+    console.log("======================================");
+    console.log("📚 LIBRARY MANAGEMENT SYSTEM");
+    console.log("======================================");
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
+    console.log("======================================");
+    console.log("");
 });
