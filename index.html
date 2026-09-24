@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>📚 Library</h2>
+
+
+<button class="nav-btn active" onclick="showSection('dashboard')">
+    Dashboard
+</button>
+
+<button class="nav-btn" onclick="showSection('books')">
+    Books
+</button>
+
+<button class="nav-btn" onclick="showSection('students')">
+    Students
+</button>
+
+<button class="nav-btn" onclick="showSection('issued')">
+    Issued Books
+</button>
+
+
+</div>
+
+<div class="main">
+
+
+<header>
+    <div>
+        <h1>Library Dashboard</h1>
+        <p>Library management overview</p>
+    </div>
+
+    <button class="refresh-btn" onclick="loadDashboard()">
+        ↻ Refresh
+    </button>
+</header>
+
+<!-- DASHBOARD -->
+<section id="dashboard" class="section active-section">
+
+    <div class="cards">
+
+        <div class="card">
+            <div class="card-icon">📚</div>
+            <div>
+                <p>Total Books</p>
+                <h2 id="totalBooks">0</h2>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-icon">✅</div>
+            <div>
+                <p>Available Books</p>
+                <h2 id="availableBooks">0</h2>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-icon">📖</div>
+            <div>
+                <p>Issued Books</p>
+                <h2 id="issuedBooks">0</h2>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-icon">👨‍🎓</div>
+            <div>
+                <p>Total Students</p>
+                <h2 id="totalStudents">0</h2>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Recent Books</h2>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>ISBN</th>
+                        <th>Quantity</th>
+                        <th>Available</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody id="recentBooks">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</section>
+
+<!-- BOOKS -->
+<section id="books" class="section">
+
+    <div class="section-title">
+        <div>
+            <h2>Books</h2>
+            <p>All books in the library</p>
+        </div>
+
+        <button class="refresh-btn" onclick="loadBooks()">
+            ↻ Refresh
+        </button>
+    </div>
+
+    <div class="panel">
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>ISBN</th>
+                        <th>Quantity</th>
+                        <th>Available</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody id="booksTable">
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</section>
+
+<!-- STUDENTS -->
+<section id="students" class="section">
+
+    <div class="section-title">
+        <div>
+            <h2>Students</h2>
+            <p>Registered library students</p>
+        </div>
+
+        <button class="refresh-btn" onclick="loadStudents()">
+            ↻ Refresh
+        </button>
+    </div>
+
+    <div class="panel">
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+
+                <tbody id="studentsTable">
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ISSUED BOOKS -->
+<section id="issued" class="section">
+
+    <div class="section-title">
+        <div>
+            <h2>Issued Books</h2>
+            <p>Books currently issued to students</p>
+        </div>
+
+        <button class="refresh-btn" onclick="loadIssuedBooks()">
+            ↻ Refresh
+        </button>
+    </div>
+
+    <div class="panel">
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Book</th>
+                        <th>Student</th>
+                        <th>Issue Date</th>
+                        <th>Return Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody id="issuedTable">
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</section>
+
+<div id="errorMessage" class="error-message"></div>
+
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
