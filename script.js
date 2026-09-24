@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://library-dashboard-production.up.railway.app/api';
 
 // Helper function for API requests
 async function apiRequest(endpoint) {
@@ -84,10 +84,10 @@ async function loadBooks() {
         }
 
         books.forEach(book => {
-            const status = book.available > 0 
-                ? `<span class="status available">Available</span>` 
+            const status = book.available > 0
+                ? `<span class="status available">Available</span>`
                 : `<span class="status unavailable">Unavailable</span>`;
-            
+
             const row = `<tr>
                 <td>${book.id}</td>
                 <td>${book.title}</td>
@@ -113,7 +113,7 @@ async function loadStudents() {
         const students = await apiRequest('/students');
         const table = document.getElementById('studentsTable');
         if (!table) return;
-        
+
         table.innerHTML = '';
 
         if (!students || students.length === 0) {
