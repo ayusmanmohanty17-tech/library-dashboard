@@ -16,13 +16,19 @@ app.use(express.json());
 // MYSQL DATABASE CONNECTION
 // ============================================
 
-// Safely use Railway's individual environment variables
+const fs = require('fs');
+const path = require('path');
+
+// Connect to Aiven MySQL Database
 const db = mysql.createPool({
-    host: process.env.MYSQLHOST || "mysql.railway.internal",
-    port: process.env.MYSQLPORT || 3306,
-    user: process.env.MYSQLUSER || "root",
-    password: process.env.MYSQLPASSWORD || "GXMzjHsDEMwKVmnFXywoMUpYvGFEHTzD",
-    database: process.env.MYSQLDATABASE || "railway",
+    host: process.env.MYSQLHOST || "mysql-2a88a4dc-ayusmanmohanty17-e802.d.aivencloud.com",
+    port: process.env.MYSQLPORT || 15336,
+    user: process.env.MYSQLUSER || "avnadmin",
+    password: process.env.MYSQLPASSWORD || "AVNS_c-EJHWVXmbomT4Dkm_s",
+    database: process.env.MYSQLDATABASE || "defaultdb",
+    ssl: fs.existsSync(path.join(__dirname, 'ca.pem')) 
+         ? { ca: fs.readFileSync(path.join(__dirname, 'ca.pem')) } 
+         : { rejectUnauthorized: false },
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
