@@ -3,7 +3,7 @@ const mysql = require("mysql2");
 const cors = require("cors");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // ============================================
 // MIDDLEWARE
@@ -16,18 +16,13 @@ app.use(express.json());
 // MYSQL DATABASE CONNECTION
 // ============================================
 
-const db = mysql.createPool({
+// Use Railway's automatic connection string if available, otherwise fallback
+const db = mysql.createPool(process.env.MYSQL_URL || {
 host: "mysql.railway.internal",
 port: 3306,
 user: "root",
-
-// ========================================
-// CHANGE ONLY THIS PASSWORD
-// ========================================
 password: "GXMzjilsDEWkVmnFXywoMUpYvGFEHTzD",
-
 database: "railway",
-
 waitForConnections: true,
 connectionLimit: 10,
 queueLimit: 0
