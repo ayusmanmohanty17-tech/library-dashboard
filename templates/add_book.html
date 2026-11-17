@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Book{% endblock %}
+{% block header_title %}Add New Book{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header card-header-navy py-3">
+                    <h5 class="mb-0 text-white">
+                        <i class="bi bi-journal-plus me-2"></i>Register New Book
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('add_book') }}" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Book Title <span class="text-danger">*</span></label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="title" 
+                                name="title" 
+                                placeholder="e.g. Clean Code: A Handbook of Agile Software Craftsmanship" 
+                                value="{{ form_data.get('title', '') }}" 
+                                maxlength="150" 
+                                required
+                            >
+                            <div class="form-text">Maximum 150 characters.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="author" class="form-label">Author Name <span class="text-danger">*</span></label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="author" 
+                                name="author" 
+                                placeholder="e.g. Robert C. Martin" 
+                                value="{{ form_data.get('author', '') }}" 
+                                maxlength="100" 
+                                required
+                            >
+                            <div class="form-text">Maximum 100 characters.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="isbn" class="form-label">ISBN Number <span class="text-danger">*</span></label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="isbn" 
+                                name="isbn" 
+                                placeholder="e.g. 978-0132350884 or ISBN006" 
+                                value="{{ form_data.get('isbn', '') }}" 
+                                maxlength="50" 
+                                required
+                            >
+                            <div class="form-text">Must be unique across the catalog.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="quantity" class="form-label">Total Quantity Copies <span class="text-danger">*</span></label>
+                            <input 
+                                type="number" 
+                                class="form-control" 
+                                id="quantity" 
+                                name="quantity" 
+                                placeholder="1" 
+                                value="{{ form_data.get('quantity', '1') }}" 
+                                min="1" 
+                                required
+                            >
+                            <div class="form-text">Available copies will initially match this quantity.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                            <a href="{{ url_for('books') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary-navy">
+                                <i class="bi bi-check-circle me-1"></i>Save Book
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

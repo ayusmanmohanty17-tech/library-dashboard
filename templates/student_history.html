@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student.name }} - Borrowing History{% endblock %}
+{% block header_title %}Student Borrowing Profile{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Student Profile Header Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="user-avatar" style="width: 56px; height: 56px; font-size: 1.5rem; background: var(--navy-primary);">
+                        {{ student.name[0]|upper }}
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-1 text-navy">{{ student.name }}</h4>
+                        <div class="text-muted small">
+                            <span class="me-3"><i class="bi bi-envelope me-1"></i>{{ student.email }}</span>
+                            <span class="me-3"><i class="bi bi-telephone me-1"></i>{{ student.phone or 'No phone registered' }}</span>
+                            <span><i class="bi bi-calendar me-1"></i>Member Since: {{ student.created_at|datetimeformat('%b %d, %Y') }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('issue_book', student_id=student.id) }}" class="btn btn-accent btn-sm">
+                        <i class="bi bi-arrow-up-right-circle me-1"></i>Issue New Book
+                    </a>
+                    <a href="{{ url_for('edit_student', student_id=student.id) }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-pencil me-1"></i>Edit Profile
+                    </a>
+                    <a href="{{ url_for('students') }}" class="btn btn-outline-navy btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Students
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loan History Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-bold text-navy">
+                <i class="bi bi-journal-bookmark me-2 text-primary"></i>All Borrowing Records
+                <span class="badge bg-light text-navy border ms-2">{{ history|length }} Records</span>
+            </h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-custom align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 70px;">Loan ID</th>
+                        <th>Book Title &amp; Author</th>
+                        <th>ISBN</th>
+                        <th>Date Issued</th>
+                        <th>Date Returned</th>
+                        <th>Loan Status</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if history %}
+                        {% for record in history %}
+                            <tr>
+                                <td class="fw-bold text-muted">#{{ record.id }}</td>
+                                <td>
+                                    <div class="fw-bold text-navy">{{ record.book_title }}</div>
+                                    <small class="text-muted">{{ record.book_author }}</small>
+                                </td>
+                                <td>
+                                    <code class="text-dark bg-light px-2 py-1 rounded">{{ record.book_isbn or 'N/A' }}</code>
+                                </td>
+                                <td>{{ record.issue_date|datetimeformat }}</td>
+                                <td>{{ record.return_date|datetimeformat }}</td>
+                                <td>
+                                    {% if record.status == 'Issued' %}
+                                        <span class="badge-status issued">
+                                            <i class="bi bi-hourglass-split"></i> Active Loan
+                                        </span>
+                                    {% else %}
+                                        <span class="badge-status returned">
+                                            <i class="bi bi-check-circle-fill"></i> Returned
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    {% if record.status == 'Issued' %}
+                                        <button 
+                                            class="btn btn-sm btn-success py-1 px-2"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#returnConfirmModal"
+                                            data-issue-id="{{ record.id }}"
+                                            data-book-title="{{ record.book_title }}"
+                                            data-student-name="{{ student.name }}"
+                                        >
+                                            <i class="bi bi-arrow-counterclockwise me-1"></i>Return Book
+                                        </button>
+                                    {% else %}
+                                        <span class="text-muted small">Returned</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2 text-light"></i>
+                                <h5>No Borrowing History</h5>
+                                <p class="small mb-3">This student has not borrowed any books yet.</p>
+                                <a href="{{ url_for('issue_book', student_id=student.id) }}" class="btn btn-sm btn-accent">
+                                    <i class="bi bi-arrow-up-right-circle me-1"></i>Issue First Book
+                                </a>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Return Book Confirmation Modal -->
+<div class="modal fade" id="returnConfirmModal" tabindex="-1" aria-labelledby="returnModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="returnModalLabel">
+                    <i class="bi bi-arrow-counterclockwise me-2"></i>Confirm Book Return
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p class="mb-2">Are you sure you want to process the return for:</p>
+                <div class="p-3 bg-light rounded border mb-3">
+                    <div class="fw-bold text-navy" id="returnModalBookTitle">Book Title</div>
+                    <div class="text-muted small">Borrower: <span id="returnModalStudentName" class="fw-semibold">Student Name</span></div>
+                </div>
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-info-circle text-primary me-1"></i>
+                    This action will update the status to Returned and increase available copies by 1.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="returnModalForm" method="POST" action="">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check2-circle me-1"></i>Confirm &amp; Return Book
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

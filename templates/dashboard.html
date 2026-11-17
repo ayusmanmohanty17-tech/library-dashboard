@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Overview{% endblock %}
+{% block header_title %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Welcome Header & Quick Action Row -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between pb-3 mb-3 border-bottom">
+        <div>
+            <h4 class="fw-bold mb-1 text-navy">Welcome back, {{ current_admin }}!</h4>
+            <p class="text-muted small mb-0">Here is the real-time operational status of the library repository.</p>
+        </div>
+        <div class="d-flex gap-2 mt-2 mt-md-0">
+            <a href="{{ url_for('issue_book') }}" class="btn btn-accent btn-sm">
+                <i class="bi bi-arrow-up-right-circle me-1"></i>Issue Book
+            </a>
+            <a href="{{ url_for('add_book') }}" class="btn btn-primary-navy btn-sm">
+                <i class="bi bi-plus-circle me-1"></i>Add New Book
+            </a>
+            <a href="{{ url_for('add_student') }}" class="btn btn-outline-navy btn-sm">
+                <i class="bi bi-person-plus me-1"></i>Register Student
+            </a>
+        </div>
+    </div>
+
+    <!-- Live Statistics Cards -->
+    <div class="row g-3 mb-4">
+        <!-- Total Book Titles -->
+        <div class="col-12 col-sm-6 col-xl-2">
+            <div class="card stat-card stat-navy h-100 shadow-sm">
+                <div class="stat-header">
+                    <span class="stat-title">Book Titles</span>
+                    <div class="stat-icon bg-navy-light">
+                        <i class="bi bi-bookshelf text-primary"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ stats.total_books_titles }}</div>
+                <div class="stat-sub">{{ stats.total_books_copies }} Total Copies</div>
+            </div>
+        </div>
+
+        <!-- Registered Students -->
+        <div class="col-12 col-sm-6 col-xl-2">
+            <div class="card stat-card stat-blue h-100 shadow-sm">
+                <div class="stat-header">
+                    <span class="stat-title">Students</span>
+                    <div class="stat-icon bg-blue-light">
+                        <i class="bi bi-people-fill text-info"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ stats.total_students }}</div>
+                <div class="stat-sub">Registered Members</div>
+            </div>
+        </div>
+
+        <!-- Available Books -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stat-card stat-success h-100 shadow-sm">
+                <div class="stat-header">
+                    <span class="stat-title">Available Copies</span>
+                    <div class="stat-icon bg-green-light">
+                        <i class="bi bi-check-circle-fill text-success"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ stats.total_available_copies }}</div>
+                <div class="stat-sub">Ready to be Borrowed</div>
+            </div>
+        </div>
+
+        <!-- Currently Issued Books -->
+        <div class="col-12 col-sm-6 col-xl-2">
+            <div class="card stat-card stat-warning h-100 shadow-sm">
+                <div class="stat-header">
+                    <span class="stat-title">Active Loans</span>
+                    <div class="stat-icon bg-yellow-light">
+                        <i class="bi bi-hourglass-split text-warning"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ stats.currently_issued }}</div>
+                <div class="stat-sub">Currently with Students</div>
+            </div>
+        </div>
+
+        <!-- Returned Books -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stat-card stat-info h-100 shadow-sm">
+                <div class="stat-header">
+                    <span class="stat-title">Completed Returns</span>
+                    <div class="stat-icon bg-cyan-light">
+                        <i class="bi bi-arrow-counterclockwise text-cyan"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ stats.returned_books }}</div>
+                <div class="stat-sub">Past Completed Returns</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts & Analytics Row -->
+    <div class="row g-4 mb-4">
+        <!-- Visual Chart Card -->
+        <div class="col-lg-8">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                    <h6 class="mb-0 fw-bold text-navy">
+                        <i class="bi bi-pie-chart-fill text-primary me-2"></i>Circulation & Inventory Overview
+                    </h6>
+                    <span class="badge bg-light text-muted border">Live Database Metrics</span>
+                </div>
+                <div class="card-body">
+                    <div style="height: 260px; position: relative;">
+                        <canvas id="overviewChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Summary & Low Stock Card -->
+        <div class="col-lg-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-bold text-navy">
+                        <i class="bi bi-bell-fill text-warning me-2"></i>Inventory Highlights
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if low_inventory_books %}
+                        <div class="alert alert-warning py-2 px-3 small mb-3">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            <strong>Out of Stock Alert:</strong> The following titles have zero available copies.
+                        </div>
+                        <ul class="list-group list-group-flush small">
+                            {% for b in low_inventory_books %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <div>
+                                        <div class="fw-semibold text-truncate" style="max-width: 190px;">{{ b.title }}</div>
+                                        <div class="text-muted">{{ b.author }}</div>
+                                    </div>
+                                    <span class="badge bg-danger rounded-pill">0 Available</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-check2-circle text-success fs-1 d-block mb-2"></i>
+                            <div class="fw-bold">All Titles in Stock!</div>
+                            <small>Every book title in the catalog currently has copies ready for issue.</small>
+                        </div>
+                    {% endif %}
+
+                    <div class="mt-4 pt-3 border-top">
+                        <div class="d-flex justify-content-between text-muted small mb-2">
+                            <span>Circulation Ratio:</span>
+                            <span class="fw-bold text-navy">
+                                {% if stats.total_books_copies > 0 %}
+                                    {{ "%.1f"|format((stats.currently_issued / stats.total_books_copies) * 100) }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div 
+                                id="circulationProgressBar"
+                                class="progress-bar bg-warning" 
+                                role="progressbar" 
+                                aria-valuemin="0" 
+                                aria-valuemax="100"
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Borrowing Activity Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex flex-wrap align-items-center justify-content-between">
+            <h6 class="mb-0 fw-bold text-navy">
+                <i class="bi bi-clock-history text-primary me-2"></i>Recent Borrowing Transactions
+            </h6>
+            <a href="{{ url_for('issued_books') }}" class="btn btn-sm btn-outline-navy">
+                View Full Circulation History <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-custom align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Loan ID</th>
+                        <th>Book Details</th>
+                        <th>Student Information</th>
+                        <th>Issue Date</th>
+                        <th>Return Date</th>
+                        <th>Status</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if recent_activity %}
+                        {% for loan in recent_activity %}
+                            <tr>
+                                <td class="fw-bold text-muted">#{{ loan.id }}</td>
+                                <td>
+                                    <div class="fw-semibold text-navy">{{ loan.book_title }}</div>
+                                    <small class="text-muted"><i class="bi bi-person-fill"></i> {{ loan.book_author }}</small>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">{{ loan.student_name }}</div>
+                                    <small class="text-muted">{{ loan.student_email }}</small>
+                                </td>
+                                <td>{{ loan.issue_date|datetimeformat }}</td>
+                                <td>{{ loan.return_date|datetimeformat }}</td>
+                                <td>
+                                    {% if loan.status == 'Issued' %}
+                                        <span class="badge-status issued">
+                                            <i class="bi bi-hourglass-split"></i> Issued
+                                        </span>
+                                    {% else %}
+                                        <span class="badge-status returned">
+                                            <i class="bi bi-check-circle-fill"></i> Returned
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    {% if loan.status == 'Issued' %}
+                                        <button 
+                                            class="btn btn-sm btn-success py-1 px-2"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#returnConfirmModal"
+                                            data-issue-id="{{ loan.id }}"
+                                            data-book-title="{{ loan.book_title }}"
+                                            data-student-name="{{ loan.student_name }}"
+                                        >
+                                            <i class="bi bi-arrow-counterclockwise me-1"></i>Return
+                                        </button>
+                                    {% else %}
+                                        <span class="text-muted small">Completed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox fs-2 d-block mb-1"></i>
+                                No borrowing transactions recorded yet.
+                                <div class="mt-2">
+                                    <a href="{{ url_for('issue_book') }}" class="btn btn-sm btn-accent">
+                                        <i class="bi bi-plus-lg me-1"></i>Issue First Book
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Return Book Confirmation Modal -->
+<div class="modal fade" id="returnConfirmModal" tabindex="-1" aria-labelledby="returnModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="returnModalLabel">
+                    <i class="bi bi-arrow-counterclockwise me-2"></i>Confirm Book Return
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p class="mb-2">Are you sure you want to process the return for:</p>
+                <div class="p-3 bg-light rounded border mb-3">
+                    <div class="fw-bold text-navy" id="returnModalBookTitle">Book Title</div>
+                    <div class="text-muted small">Borrower: <span id="returnModalStudentName" class="fw-semibold">Student Name</span></div>
+                </div>
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-info-circle text-primary me-1"></i>
+                    This action will record the return date and increase available inventory by 1 copy.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="returnModalForm" method="POST" action="">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check2-circle me-1"></i>Confirm &amp; Return Book
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Safe JSON payload: Separates backend template data from JavaScript to eliminate IDE syntax warnings -->
+<script id="dashboardPayload" type="application/json">
+{
+  "totalCopies": {{ stats.total_books_copies or 0 }},
+  "availableCopies": {{ stats.total_available_copies or 0 }},
+  "currentlyIssued": {{ stats.currently_issued or 0 }},
+  "returnedBooks": {{ stats.returned_books or 0 }}
+}
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const payloadNode = document.getElementById('dashboardPayload');
+        if (!payloadNode) return;
+
+        let dashboardData = { totalCopies: 0, availableCopies: 0, currentlyIssued: 0, returnedBooks: 0 };
+        try {
+            dashboardData = JSON.parse(payloadNode.textContent);
+        } catch (e) {
+            console.error('Error parsing dashboard payload:', e);
+        }
+
+        // Update circulation ratio progress bar
+        const progressBar = document.getElementById('circulationProgressBar');
+        if (progressBar && dashboardData.totalCopies > 0) {
+            const ratioPct = Math.min(100, Math.round((dashboardData.currentlyIssued / dashboardData.totalCopies) * 100));
+            progressBar.style.width = ratioPct + '%';
+            progressBar.setAttribute('aria-valuenow', String(ratioPct));
+        }
+
+        const ctx = document.getElementById('overviewChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Total Copies', 'Available Copies', 'Active Loans', 'Completed Returns'],
+                    datasets: [{
+                        label: 'Count',
+                        data: [
+                            dashboardData.totalCopies,
+                            dashboardData.availableCopies,
+                            dashboardData.currentlyIssued,
+                            dashboardData.returnedBooks
+                        ],
+                        backgroundColor: [
+                            'rgba(17, 34, 64, 0.85)',
+                            'rgba(16, 185, 129, 0.85)',
+                            'rgba(245, 158, 11, 0.85)',
+                            'rgba(6, 182, 212, 0.85)'
+                        ],
+                        borderColor: [
+                            '#112240',
+                            '#10b981',
+                            '#f59e0b',
+                            '#06b6d4'
+                        ],
+                        borderWidth: 1.5,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

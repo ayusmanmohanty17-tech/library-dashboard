@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Issue Book{% endblock %}
+{% block header_title %}Circulation - Issue Book{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-9 col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-header card-header-navy py-3">
+                    <h5 class="mb-0 text-white">
+                        <i class="bi bi-arrow-up-right-circle me-2"></i>Issue Book to Student
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    {% if not available_books %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <strong>No Books Available:</strong> All titles currently in the catalog are checked out. 
+                            Please return some books or <a href="{{ url_for('add_book') }}" class="alert-link">add new inventory</a>.
+                        </div>
+                    {% elif not students %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-person-x-fill me-2"></i>
+                            <strong>No Students Found:</strong> Please <a href="{{ url_for('add_student') }}" class="alert-link">register a student</a> before issuing a book.
+                        </div>
+                    {% else %}
+                        <form method="POST" action="{{ url_for('issue_book') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                            <!-- Student Selection -->
+                            <div class="mb-3">
+                                <label for="student_id" class="form-label">
+                                    <i class="bi bi-person-check me-1"></i>Select Student <span class="text-danger">*</span>
+                                </label>
+                                <select name="student_id" id="student_id" class="form-select" required>
+                                    <option value="" disabled {% if not selected_student_id %}selected{% endif %}>-- Select registered student --</option>
+                                    {% for s in students %}
+                                        <option 
+                                            value="{{ s.id }}" 
+                                            {% if selected_student_id == s.id %}selected{% endif %}
+                                        >
+                                            {{ s.name }} ({{ s.email }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Choose the borrower from registered students.</div>
+                            </div>
+
+                            <!-- Book Selection -->
+                            <div class="mb-3">
+                                <label for="book_select" class="form-label">
+                                    <i class="bi bi-book me-1"></i>Select Book <span class="text-danger">*</span>
+                                </label>
+                                <select name="book_id" id="book_select" class="form-select" required>
+                                    <option value="" disabled {% if not selected_book_id %}selected{% endif %}>-- Select available book --</option>
+                                    {% for b in available_books %}
+                                        <option 
+                                            value="{{ b.id }}"
+                                            data-available="{{ b.available }}"
+                                            data-author="{{ b.author }}"
+                                            data-isbn="{{ b.isbn }}"
+                                            {% if selected_book_id == b.id %}selected{% endif %}
+                                        >
+                                            {{ b.title }} — by {{ b.author }} [{{ b.available }} in stock]
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Only books with available copies &gt; 0 are displayed.</div>
+                            </div>
+
+                            <!-- Dynamic Book Preview Box -->
+                            <div id="book_info_preview" class="mb-4"></div>
+
+                            <!-- Operational Notes -->
+                            <div class="alert alert-light border small text-muted mb-4">
+                                <div><i class="bi bi-shield-check text-success me-1"></i><strong>Atomic Operation:</strong></div>
+                                <ul class="mb-0 ps-3">
+                                    <li>A borrowing record will be inserted into <code>issued_books</code> with status <strong>'Issued'</strong>.</li>
+                                    <li>The available count in <code>books</code> will automatically decrease by 1.</li>
+                                </ul>
+                            </div>
+
+                            <!-- Submit Buttons -->
+                            <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle me-1"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary-navy">
+                                    <i class="bi bi-arrow-up-right-circle me-1"></i>Confirm &amp; Issue Book
+                                </button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

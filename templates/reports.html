@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}Library Analytics &amp; Reports{% endblock %}
+{% block header_title %}Analytics &amp; Operational Reports{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between pb-3 mb-3 border-bottom">
+        <div>
+            <h4 class="fw-bold mb-1 text-navy">Library Analytical Reports</h4>
+            <p class="text-muted small mb-0">Dynamic metrics, reader engagement rankings, and inventory availability aggregates.</p>
+        </div>
+        <div>
+            <button onclick="window.print()" class="btn btn-outline-navy btn-sm">
+                <i class="bi bi-printer me-1"></i>Print Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Inventory Aggregate Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card stat-navy h-100 shadow-sm">
+                <div class="stat-header">
+                    <span class="stat-title">Total Catalog Titles</span>
+                    <div class="stat-icon bg-navy-light">
+                        <i class="bi bi-journal-album text-navy"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ inventory_summary.total_titles or 0 }}</div>
+                <div class="stat-sub">{{ inventory_summary.total_copies or 0 }} Total Volumes</div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card stat-success h-100 shadow-sm">
+                <div class="stat-header">
+                    <span class="stat-title">Available in Stock</span>
+                    <div class="stat-icon bg-green-light">
+                        <i class="bi bi-check-circle text-success"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ inventory_summary.total_available or 0 }}</div>
+                <div class="stat-sub">{{ inventory_summary.available_titles or 0 }} Titles Available</div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card stat-warning h-100 shadow-sm">
+                <div class="stat-header">
+                    <span class="stat-title">Active Circulation</span>
+                    <div class="stat-icon bg-yellow-light">
+                        <i class="bi bi-book text-warning"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ issue_status_summary.active_issues or 0 }}</div>
+                <div class="stat-sub">Books currently issued</div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card stat-info h-100 shadow-sm">
+                <div class="stat-header">
+                    <span class="stat-title">Completed Loans</span>
+                    <div class="stat-icon bg-cyan-light">
+                        <i class="bi bi-arrow-return-left text-info"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ issue_status_summary.returned_loans or 0 }}</div>
+                <div class="stat-sub">{{ issue_status_summary.total_transactions or 0 }} Total All-Time Loans</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visual Charts Row -->
+    <div class="row g-4 mb-4">
+        <!-- Most Frequently Borrowed Chart -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-bold text-navy">
+                        <i class="bi bi-graph-up-arrow me-2 text-primary"></i>Top Borrowed Titles Breakdown
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if top_books %}
+                        <div style="height: 270px; position: relative;">
+                            <canvas id="topBooksChart"></canvas>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-bar-chart fs-1 d-block mb-2 text-light"></i>
+                            <p class="mb-0">No loan records accumulated yet to generate top books ranking.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Breakdown Chart -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-bold text-navy">
+                        <i class="bi bi-pie-chart me-2 text-primary"></i>Inventory Distribution
+                    </h6>
+                </div>
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <div style="width: 100%; max-height: 240px; position: relative;">
+                        <canvas id="inventoryDoughnutChart"></canvas>
+                    </div>
+                    <div class="mt-3 text-center small text-muted">
+                        <span class="me-3"><i class="bi bi-square-fill text-success me-1"></i>Available ({{ inventory_summary.total_available or 0 }})</span>
+                        <span><i class="bi bi-square-fill text-warning me-1"></i>Issued ({{ issue_status_summary.active_issues or 0 }})</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Tables Row: Most Frequently Issued & Top Readers -->
+    <div class="row g-4 mb-4">
+        <!-- Most Frequently Issued Books Table -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold text-navy">
+                        <i class="bi bi-star-fill text-warning me-2"></i>Most Frequently Issued Books
+                    </h6>
+                    <span class="badge bg-light text-navy border">Top Titles</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-custom align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Book Title &amp; Author</th>
+                                <th>ISBN</th>
+                                <th class="text-center">Times Borrowed</th>
+                                <th class="text-end">Stock Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if top_books %}
+                                {% for b in top_books %}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold text-navy">{{ b.title }}</div>
+                                            <small class="text-muted">{{ b.author }}</small>
+                                        </td>
+                                        <td><code>{{ b.isbn }}</code></td>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary rounded-pill px-3 py-1 fs-6">
+                                                {{ b.borrow_count }}
+                                            </span>
+                                        </td>
+                                        <td class="text-end">
+                                            {% if b.available > 0 %}
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                                    {{ b.available }} / {{ b.quantity }} Left
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                                    Out of Stock
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">
+                                        No loan records available yet.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Borrowing Students Table -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold text-navy">
+                        <i class="bi bi-award-fill text-info me-2"></i>Students With Highest Loans
+                    </h6>
+                    <span class="badge bg-light text-navy border">Top Readers</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-custom align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Email</th>
+                                <th class="text-center">Active</th>
+                                <th class="text-center">Returned</th>
+                                <th class="text-end">Total Loans</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if top_students %}
+                                {% for s in top_students %}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold text-navy">{{ s.name }}</div>
+                                        </td>
+                                        <td><small class="text-muted">{{ s.email }}</small></td>
+                                        <td class="text-center">
+                                            <span class="badge bg-warning text-dark">{{ s.active_borrowed }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-success">{{ s.returned_count }}</span>
+                                        </td>
+                                        <td class="text-end fw-bold text-navy fs-6">
+                                            {{ s.total_borrowed }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">
+                                        No student borrowing history recorded yet.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Safe JSON payload: Separates backend template data from JavaScript to eliminate IDE syntax warnings -->
+<script id="reportsPayload" type="application/json">
+{
+  "topBooks": [
+    {% for b in top_books %}
+      {"title": {{ b.title|tojson }}, "count": {{ b.borrow_count }}}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ],
+  "available": {{ inventory_summary.total_available or 0 }},
+  "issued": {{ issue_status_summary.active_issues or 0 }}
+}
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const payloadNode = document.getElementById('reportsPayload');
+        if (!payloadNode) return;
+
+        let reportsData = { topBooks: [], available: 0, issued: 0 };
+        try {
+            reportsData = JSON.parse(payloadNode.textContent);
+        } catch (e) {
+            console.error('Error parsing reports data:', e);
+        }
+
+        // 1. Most Borrowed Books Bar Chart
+        const topBooksCtx = document.getElementById('topBooksChart');
+        if (topBooksCtx && reportsData.topBooks && reportsData.topBooks.length > 0) {
+            const labels = reportsData.topBooks.map(function (b) {
+                return b.title.length > 20 ? b.title.substring(0, 18) + '...' : b.title;
+            });
+            const counts = reportsData.topBooks.map(function (b) {
+                return b.count;
+            });
+
+            new Chart(topBooksCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Times Borrowed',
+                        data: counts,
+                        backgroundColor: 'rgba(2, 132, 199, 0.85)',
+                        borderColor: '#0284c7',
+                        borderWidth: 1.5,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 2. Inventory Distribution Doughnut Chart
+        const doughnutCtx = document.getElementById('inventoryDoughnutChart');
+        if (doughnutCtx) {
+            new Chart(doughnutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Available Copies', 'Active Loans'],
+                    datasets: [{
+                        data: [reportsData.available, reportsData.issued],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.85)',
+                            'rgba(245, 158, 11, 0.85)'
+                        ],
+                        borderColor: ['#10b981', '#f59e0b'],
+                        borderWidth: 1.5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

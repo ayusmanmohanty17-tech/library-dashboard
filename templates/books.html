@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Books Catalog{% endblock %}
+{% block header_title %}Books Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Header with Action Buttons -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between pb-3 mb-3 border-bottom">
+        <div>
+            <h4 class="fw-bold mb-1 text-navy">Books Catalog &amp; Inventory</h4>
+            <p class="text-muted small mb-0">Browse, search, edit and monitor library book volumes.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('add_book') }}" class="btn btn-primary-navy">
+                <i class="bi bi-plus-circle me-1"></i>Add New Book
+            </a>
+        </div>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-3">
+            <form method="GET" action="{{ url_for('books') }}" class="row g-2 align-items-center">
+                <div class="col-12 col-md-6 col-lg-7">
+                    <div class="search-bar-wrap">
+                        <i class="bi bi-search"></i>
+                        <input 
+                            type="text" 
+                            name="search" 
+                            class="form-control" 
+                            placeholder="Search by title, author or ISBN..." 
+                            value="{{ search_query }}"
+                        >
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-md-3 col-lg-3">
+                    <select name="availability" class="form-select">
+                        <option value="all" {% if availability_filter == 'all' %}selected{% endif %}>All Inventory</option>
+                        <option value="available" {% if availability_filter == 'available' %}selected{% endif %}>In Stock (Available &gt; 0)</option>
+                        <option value="unavailable" {% if availability_filter == 'unavailable' %}selected{% endif %}>Out of Stock (Available = 0)</option>
+                    </select>
+                </div>
+                <div class="col-12 col-sm-6 col-md-3 col-lg-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-accent w-100">
+                        <i class="bi bi-funnel me-1"></i>Filter
+                    </button>
+                    {% if search_query or availability_filter != 'all' %}
+                        <a href="{{ url_for('books') }}" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Reset Search">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Books Data Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-bold text-navy">
+                <i class="bi bi-collection me-2 text-primary"></i>Catalog Records 
+                <span class="badge bg-light text-navy border ms-2">{{ books|length }} Found</span>
+            </h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-custom align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">ID</th>
+                        <th>Title &amp; Author</th>
+                        <th>ISBN</th>
+                        <th class="text-center">Total Copies</th>
+                        <th class="text-center">Available</th>
+                        <th class="text-center">Active Loans</th>
+                        <th>Registered On</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if books %}
+                        {% for book in books %}
+                            <tr>
+                                <td class="fw-bold text-muted">#{{ book.id }}</td>
+                                <td>
+                                    <div class="fw-bold text-navy">{{ book.title }}</div>
+                                    <small class="text-muted"><i class="bi bi-person me-1"></i>{{ book.author }}</small>
+                                </td>
+                                <td>
+                                    <code class="text-dark bg-light px-2 py-1 rounded">{{ book.isbn or 'N/A' }}</code>
+                                </td>
+                                <td class="text-center fw-bold">{{ book.quantity }}</td>
+                                <td class="text-center">
+                                    {% if book.available > 0 %}
+                                        <span class="badge-status available">
+                                            <i class="bi bi-check-circle"></i> {{ book.available }} Available
+                                        </span>
+                                    {% else %}
+                                        <span class="badge-status out-of-stock">
+                                            <i class="bi bi-x-circle"></i> Out of Stock
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if book.active_issued > 0 %}
+                                        <span class="badge bg-warning text-dark px-2 py-1">
+                                            {{ book.active_issued }} Issued
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted small">None</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ book.created_at|datetimeformat('%b %d, %Y') }}</small>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        {% if book.available > 0 %}
+                                            <a 
+                                                href="{{ url_for('issue_book', book_id=book.id) }}" 
+                                                class="btn btn-outline-primary"
+                                                data-bs-toggle="tooltip" 
+                                                title="Issue a copy"
+                                            >
+                                                <i class="bi bi-arrow-up-right-circle"></i>
+                                            </a>
+                                        {% endif %}
+                                        <a 
+                                            href="{{ url_for('edit_book', book_id=book.id) }}" 
+                                            class="btn btn-outline-secondary"
+                                            data-bs-toggle="tooltip" 
+                                            title="Edit Book"
+                                        >
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-outline-danger" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteBookModal"
+                                            data-book-id="{{ book.id }}"
+                                            data-book-title="{{ book.title }}"
+                                            title="Delete Book"
+                                        >
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-search fs-1 d-block mb-2 text-light"></i>
+                                <h5>No Books Found</h5>
+                                <p class="small mb-3">No book matched your search or filter criteria.</p>
+                                <a href="{{ url_for('books') }}" class="btn btn-sm btn-outline-navy me-2">Clear Filters</a>
+                                <a href="{{ url_for('add_book') }}" class="btn btn-sm btn-accent">Add New Book</a>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Book Confirmation Modal -->
+<div class="modal fade" id="deleteBookModal" tabindex="-1" aria-labelledby="deleteBookModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteBookModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Delete Book
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p class="mb-2">Are you sure you want to remove this book from the catalog?</p>
+                <div class="p-3 bg-light border rounded mb-3">
+                    <strong class="text-navy" id="deleteBookTitle">Book Title</strong>
+                </div>
+                <div class="alert alert-warning small mb-0">
+                    <i class="bi bi-shield-exclamation me-1"></i>
+                    <strong>Integrity Rule:</strong> Books cannot be deleted if there are active loans or historical borrowing records.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteBookForm" method="POST" action="">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i>Delete Permanently
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
